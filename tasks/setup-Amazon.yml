@@ -1,0 +1,57 @@
+---
+- name: setting up Amazon Linux 2 to use docker repository
+  block:
+    - name: check if docker repo is enable
+      shell: "amazon-linux-extras list | grep docker"
+      register: docker_hint
+      changed_when: false
+
+    - name: enable docker repo
+      shell: "amazon-linux-extras enable docker"
+      when:
+        - docker_hint.stdout.find("enabled") == -1
+
+    - name: installing docker package
+      yum:
+        name: docker
+        state: latest
+
+    - name: enable and start docker
+      service:
+        name: docker
+        state: "{{ docker_service_state }}"
+        enabled: "{{ docker_service_enabled }}"
+      register: docker_bridge_hint
+
+    - name: fix the bug with docker bridge
+      block:
+        # https://github.com/wodby/docker4drupal/issues/211
+        - name: Drop all iptables rules in DOCKER chain
+          shell: iptables -t filter -N DOCKER
+          register: drop_hint
+          ignore_errors: true
+
+        - name: Restart docker
+          service:
+            name: docker
+            state: restarted
+          when:
+            - drop_hint.changed == true
+            - drop_hint.rc == 0
+      when:
+        - docker_bridge_hint.changed == false
+        - docker_service_state != "stopped"
+  when: ansible_distribution_version == "2"
+
+- name: install docker on Amazon Linux 2018.03
+  block:
+    - name: install docker package on amzn 2018.03
+      package:
+        name: docker
+        state: latest
+    - name: enabled docker
+      service:
+        name: docker
+        state: "{{ docker_service_state }}"
+        enabled: "{{ docker_service_enabled }}"
+  when: ansible_distribution_version == "NA"
