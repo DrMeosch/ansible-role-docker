@@ -3,28 +3,40 @@ dependency:
   name: galaxy
 driver:
   name: docker
+lint: |
+  set -e
+  yamllint .
+  ansible-lint
 platforms:
-  - name: EL8
-    image: docker.io/pycontribs/centos:8
-    volumes: /sys/fs/cgroup:/sys/fs/cgroup:ro
-    privileged: true
   - name: EL7
-    image: centos:7
-    volumes: /sys/fs/cgroup:/sys/fs/cgroup:ro
+    image: "geerlingguy/docker-${MOLECULE_DISTRO:-centos7}-ansible:latest"
+    command: ${MOLECULE_DOCKER_COMMAND:-""}
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
     privileged: true
-  - name: AMZ.2
-    image: amazonlinux:latest
-    volumes: /sys/fs/cgroup:/sys/fs/cgroup:ro
+    pre_build_image: true
+  - name: EL8
+    image: "geerlingguy/docker-${MOLECULE_DISTRO:-centos8}-ansible:latest"
+    command: ${MOLECULE_DOCKER_COMMAND:-""}
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
     privileged: true
-  - name: AMZ.1
-    image: amazonlinux:2018.03
-    volumes: /sys/fs/cgroup:/sys/fs/cgroup:ro
-    privileged: true
+    pre_build_image: true
   - name: Bionic
-    image: ubuntu:18.04
-    volumes: /sys/fs/cgroup:/sys/fs/cgroup:ro
+    image: "geerlingguy/docker-${MOLECULE_DISTRO:-ubuntu1804}-ansible:latest"
+    command: ${MOLECULE_DOCKER_COMMAND:-""}
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
     privileged: true
+    pre_build_image: true
+  - name: AMZ2
+    image: "geerlingguy/docker-${MOLECULE_DISTRO:-amazonlinux2}-ansible:latest"
+    command: ${MOLECULE_DOCKER_COMMAND:-""}
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    privileged: true
+    pre_build_image: true
 provisioner:
   name: ansible
-verifier:
-  name: ansible
+  playbooks:
+    converge: ${MOLECULE_PLAYBOOK:-converge.yml}
