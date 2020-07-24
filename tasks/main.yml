@@ -7,19 +7,16 @@
   include_tasks: '{{ item }}'
   loop: "{{ q('first_found', files) }}"
 
-- name: Install Docker.
-  block:
-    - name: install docker package
-      package:
-        name: "{{ docker_package }}"
-        state: "{{ docker_package_state }}"
+- name: install docker package
+  package:
+    name: "{{ docker_package }}"
+    state: "{{ docker_package_state }}"
 
-    - name: Ensure Docker is started and enabled at boot.
-      service:
-        name: docker
-        state: "{{ docker_service_state }}"
-        enabled: "{{ docker_service_enabled }}"
-  when: ansible_distribution != "Amazon"
+- name: Ensure Docker is started and enabled at boot.
+  service:
+    name: docker
+    state: "{{ docker_service_state }}"
+    enabled: "{{ docker_service_enabled }}"
 
 - name: Ensure handlers are notified now to avoid firewall conflicts.
   meta: flush_handlers
